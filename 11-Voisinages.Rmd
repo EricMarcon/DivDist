@@ -1,0 +1,228 @@
+---
+title: "Voisinages"
+author:
+  - name: Eric Marcon
+abstract: >
+  Manipulation des voisinages dans un jeu de points avec spatstat.
+date: "`r format(Sys.time(), '%d %B %Y')`"
+pdftoc: no
+preamble: >
+  \usepackage{textcomp}
+  \DeclareUnicodeCharacter{B0}{\textdegree}
+  \hyphenation{bio-di-ver-si-ty sap-lings}
+bibliography: references.bib
+lang: french # english
+always_allow_html: yes
+output:
+  bookdown::html_document2:
+    theme: sandstone
+    toc: yes
+    toc_float: yes
+  bookdown::gitbook:
+    config:
+      download: null
+  bookdown::word_document2: default
+  bookdown::pdf_book:
+    base_format: EcoFoG::memo
+    keep_tex: yes
+---
+
+```{r Options, echo=FALSE, message=FALSE}
+### knitr and R options (packages, ...)
+knitr::opts_chunk$set(echo = TRUE, tidy=TRUE, tidy.opts=list(blank=FALSE, width.cutoff=50), out.width='.8\\maxwidth', fig.align='center')
+options(width=50)
+# Installation des packages si nécessaire et chargement
+Library <- function(Packages) {
+  InstallAndLoad <- function(Package) {
+    if (!Package %in% installed.packages()[, 1]) {install.packages(Package, repos="https://cran.rstudio.com/")}
+    require(Package, character.only = TRUE)
+  }
+  invisible(sapply(Packages, InstallAndLoad))
+}
+# Ajouter les packages nécessaires ici
+Library(c("devtools", "kableExtra", "tidyverse", "dbmss", "automap"))
+```
+
+
+# Objectif
+
+Obtenir le contenu du voisinage d'arbres cartographiés et calculer des statistiques sur eux, incluant la correction des effets de bord.
+La package spatstat [@Baddeley2005], complété par dbmss [@Marcon2014] fournit les outils nécessaires.
+
+# Données
+
+## Lecture de la base de Paracou
+
+Une copie des données est stockée localement.
+```{r}
+load("data/Paracoudb.rda")
+```
+
+## Nettoyage
+
+Suppression des colonnes inutiles et ajout d'une colonne avec le nom complet de l'espèce
+
+```{r}
+library("tidyverse")
+Paracoudb %>%
+  as_tibble %>% 
+  filter(CodeAlive == TRUE) %>% 
+  select(Plot, SubPlot:Yfield, -Projet, -Protocole, Family:Species, CircCorr) %>%
+  unite(col = spName, Genus, Species, remove = FALSE) -> Paracou
+```
+
+
+## Vérification des données : Carte
+
+Carte des wapas de la P6.
+
+```{r, out.width='70%'}
+Paracou %>% filter(Plot==6 & Genus=="Eperua") %>%
+  ggplot() + 
+  geom_point(aes(x = Xfield, y = Yfield, size = CircCorr, color=Species)) + 
+  coord_fixed() + scale_color_brewer(palette = "Set1") +
+  labs(x="X", y="Y", caption="Paracou, parcelle 6", size="Circonférence", color="Espèce")
+```
+
+
+# Utilisation de spatstat
+
+## Création d'un semis de points (planar point pattern)
+
+```{r}
+library("dbmss")
+Paracou %>% filter(Plot==6) %>% 
+  rename(X=Xfield, Y=Yfield, PointType=spName, PointWeight=CircCorr) %>%
+  as.data.frame %>% 
+  wmppp(window=owin(xrange=c(0, 250), yrange=c(0, 250), unitname=c("meter", "meters"))) ->
+  Plot6
+```
+
+`Plot6` est un objet _wmppp_.
+
+
+## Choix des points
+
+Sélection des Wapa grandiflora.
+
+```{r}
+Plot6[Plot6$marks$PointType == "Eperua_grandiflora"] %>% 
+  plot(which.marks=1)
+```
+
+Sélection du dixième point.
+```{r}
+Plot6[10] %>% plot
+```
+La sélection retourne un _wmppp_.
+
+
+## Voisinage d'un point
+
+Sélection du point
+```{r}
+Plot6[10] -> point_10
+```
+
+Le voisinage d'un point est le contenu d'une fenêtre circulaire de rayon choisi.
+
+```{r}
+r <- 20
+nbd_window <- disc(radius=r, centre=c(point_10$x, point_10$y))
+plot(nbd_window)
+```
+
+Le voisinage contenu dans la fenêtre est l'intersection entre les deux fenêtres.
+
+```{r}
+nbd_window_in <- intersect.owin(Plot6$window, nbd_window)
+plot(nbd_window_in)
+```
+Sa surface est calculable, comme le facteur de correction pour une correction d'effet de bord par exrapolation.
+
+```{r}
+area(nbd_window_in)
+pi*r^2/area(nbd_window_in)
+```
+
+Le voisinage est obtenu par sélection directe.
+```{r}
+plot(Plot6[nbd_window_in])
+```
+
+Une fonction pour extraire le voisinage d'un point:
+```{r}
+nbd_point <- function(i, Plot, r) {
+  nbd_window <- disc(radius=r, centre=c(Plot$x[i], Plot$y[i]))
+  nbd_window_in <- intersect.owin(Plot$window, nbd_window)
+  return(Plot[nbd_window_in])
+}
+
+plot(nbd_point(10, Plot6, r))
+```
+
+
+# Calcul de la surface terrière du voisinage
+
+## Exemple pour un point
+
+```{r}
+basal_area <- function(neighborhood) {
+  return(sum(neighborhood$marks$PointWeight^2 * pi /4))
+}
+
+basal_area(Plot6[nbd_window_in])
+```
+
+Avec correction de l'effet de bord
+
+```{r}
+basal_area <- function(neighborhood, r) {
+  G <- sum(neighborhood$marks$PointWeight^2 * pi /4)
+  Correction <- pi*r^2/area(neighborhood$window)
+  return(G * Correction)
+}
+
+basal_area(Plot6[nbd_window_in], r)
+```
+
+
+## Calcul pour tous les Wapas grandiflora
+
+```{r}
+r <-20
+wmppp_wapa <- Plot6[Plot6$marks$PointType == "Eperua_grandiflora"]
+
+(sapply(1:wmppp_wapa$n, function(i) basal_area(nbd_point(i, wmppp_wapa, r), r)) -> competition)
+
+# Pour mémoire: facteur de correction par extrapolation
+sapply(1:wmppp_wapa$n, function(i) pi * r^2 / area(nbd_point(i, wmppp_wapa, r)))
+```
+
+## Carte de la concurrence
+
+```{r}
+# Préparation d'une grille de 128 points de côté
+xy <- gridcentres(Plot6$window, 128, 128)
+# Formatage de la grille
+library("sp")
+Grille <- SpatialPoints(cbind(xy$x, xy$y))
+gridded(Grille) <- TRUE
+# Création d'un SpatialPointsDataFrame avec les données
+sdf_competition <- SpatialPointsDataFrame(coords = data.frame(x = wmppp_wapa$x, y = wmppp_wapa$y), data = data.frame(competition))
+# Krigeage du SpatialPointsDataFrame
+library("automap")
+AutoKrige <- autoKrige(formula = competition ~ 1, input_data = sdf_competition, new_data = Grille)
+# Résultat du krigeage
+plot(AutoKrige)
+```
+
+Retraitement pour placer les arbres.
+```{r}
+image(AutoKrige$krige_output, col = topo.colors(128, alpha = 1), asp = 1)
+contour(AutoKrige$krige_output, add = TRUE)
+points(x = wmppp_wapa$x, y = wmppp_wapa$y, pch = 20)
+```
+
+
+`r if (!knitr:::is_latex_output()) '# References {-}'`
