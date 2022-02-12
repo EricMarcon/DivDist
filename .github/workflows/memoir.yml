@@ -24,13 +24,6 @@ jobs:
           install.packages(c("memoiR", "rmdformats", "tinytex"))
           tinytex::install_tinytex()
         shell: Rscript {0}
-<<<<<<< HEAD
-=======
-      - name: Private key
-        run: |
-          cat("${{ secrets.rsa }}", file="GF-Richness.rsa")
-        shell: Rscript {0}
->>>>>>> 5a2e885601dd507bb5c514b518f2e5f5ea4bd79a
       - name: Render Rmarkdown files
         run: |
           RMD_PATH=($(ls | grep "[.]Rmd$"))
