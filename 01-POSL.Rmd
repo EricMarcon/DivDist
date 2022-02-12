@@ -8,27 +8,19 @@ abstract: >
 date: "`r format(Sys.time(), '%d %B %Y')`"
 url: https://GitHubID.github.io/Repository/
 github-repo: GitHubID/Repository
-# Language
 lang: en-US
 otherlangs: [fr-FR,it]
-# Bibliography
 bibliography: references.bib
 biblio-style: chicago
-# LaTeX
 preamble: >
   \hyphenation{bio-di-ver-si-ty sap-lings}
-# Print table of contents in PDFs?
 pdftoc: false
-# If true, choose its depth
 toc-depth: 3
-# Do not modify
 always_allow_html: yes
 output:
-  bookdown::pdf_book:
-    template: latex/template.tex
-    citation_package: natbib
-    latex_engine: xelatex
-    keep_tex: yes
+  bookdown::html_document2:
+    toc: yes
+    toc_float: yes
   rmdformats::downcute:
     use_bookdown: yes
     lightbox: yes
@@ -38,9 +30,11 @@ output:
       download: "pdf"
       sharing:
         github: yes
-  bookdown::html_document2:
-    toc: yes
-    toc_float: yes
+  bookdown::pdf_book:
+    template: latex/template.tex
+    citation_package: natbib
+    latex_engine: xelatex
+    keep_tex: yes
 ---
 
 ```{r DoNotModify, include=FALSE}
@@ -119,8 +113,8 @@ Il faut utiliser la base de 2021 et la base actuelle, toutes deux copiées dans 
 
 ```{r}
 # Décompactage des fichiers GeoJson (ignorés par git parce que trop gros)
-unzip("data/les-arbres-2021.zip.zip", exdir="data/")
-unzip("data/les-arbres-abattus.zip", exdir="data/")
+unzip("data/les-arbres-2021.zip", exdir="data")
+unzip("data/les-arbres-abattus.zip", exdir="data")
 
 library("rgdal")
 # Lecture des fichiers GeoJSon

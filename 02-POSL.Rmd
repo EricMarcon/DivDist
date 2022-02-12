@@ -8,27 +8,19 @@ abstract: >
 date: "`r format(Sys.time(), '%d %B %Y')`"
 url: https://GitHubID.github.io/Repository/
 github-repo: GitHubID/Repository
-# Language
 lang: en-US
 otherlangs: [fr-FR,it]
-# Bibliography
 bibliography: references.bib
 biblio-style: chicago
-# LaTeX
 preamble: >
   \hyphenation{bio-di-ver-si-ty sap-lings}
-# Print table of contents in PDFs?
 pdftoc: false
-# If true, choose its depth
 toc-depth: 3
-# Do not modify
 always_allow_html: yes
 output:
-  bookdown::pdf_book:
-    template: latex/template.tex
-    citation_package: natbib
-    latex_engine: xelatex
-    keep_tex: yes
+  bookdown::html_document2:
+    toc: yes
+    toc_float: yes
   rmdformats::downcute:
     use_bookdown: yes
     lightbox: yes
@@ -38,9 +30,11 @@ output:
       download: "pdf"
       sharing:
         github: yes
-  bookdown::html_document2:
-    toc: yes
-    toc_float: yes
+  bookdown::pdf_book:
+    template: latex/template.tex
+    citation_package: natbib
+    latex_engine: xelatex
+    keep_tex: yes
 ---
 
 ```{r DoNotModify, include=FALSE}
@@ -119,7 +113,9 @@ load("data/POSL.RData")
 ## Arbres vivants les plus fréquents (nom latin)
 
 ```{r}
-BDD_Vivants_renseignes_POSL%>% 
+BDD_Vivants_et_Abattus_renseignes_POSL %>% 
+  # Arbres vivants seulement
+  filter(Etat == "Vivant") %>% 
   group_by(GenrEsp) %>% 
   summarise(Nombre=n(), .groups='drop') %>% 
   arrange(desc(Nombre)) 
@@ -131,7 +127,9 @@ L'érable sycomore(*Acer pseudoplatanus*) arrive en 3ème position.
 ## Arbres vivants les plus fréquents pour les non initiés
 
 ```{r}
-BDD_Vivants_renseignes_POSL%>% 
+BDD_Vivants_et_Abattus_renseignes_POSL %>% 
+  # Arbres vivants seulement
+  filter(Etat == "Vivant") %>% 
   group_by(EspeceFrancais) %>% 
   summarise(Nombre=n(), .groups='drop') %>% 
   arrange(desc(Nombre))
@@ -140,7 +138,9 @@ BDD_Vivants_renseignes_POSL%>%
 ## Arbres abattus les plus fréquents (nom latin)
 
 ```{r}
-BDD_Abattus_renseignes_POSL%>% 
+BDD_Vivants_et_Abattus_renseignes_POSL %>% 
+  # Arbres abattus seulement
+  filter(Etat == "Abattu") %>% 
   group_by(GenrEsp) %>% 
   summarise(Nombre=n(), .groups='drop') %>% 
   arrange(desc(Nombre))
@@ -152,7 +152,9 @@ Surreprésentation des érables sycomores (*Acer pseudoplatanus*) dans les arbre
 # Arbres abattus les plus fréquents pour les non initiés
 
 ```{r}
-BDD_Abattus_renseignes_POSL%>% 
+BDD_Vivants_et_Abattus_renseignes_POSL %>% 
+  # Arbres abattus seulement
+  filter(Etat == "Abattu") %>% 
   group_by(EspeceFrancais) %>% 
   summarise(Nombre=n(), .groups='drop') %>% 
   arrange(desc(Nombre))
@@ -164,7 +166,9 @@ Les érables représentent plus de la moitié des arbres abattus (26/48).
 ## Causes de l'abattage
 
 ```{r}
-BDD_Abattus_renseignes_POSL%>% 
+BDD_Vivants_et_Abattus_renseignes_POSL %>% 
+  # Arbres abattus seulement
+  filter(Etat == "Abattu") %>% 
   group_by(MotifAbattage) %>% 
   summarise(Nombre=n(), .groups='drop') %>% 
   arrange(desc(Nombre))
@@ -176,7 +180,9 @@ Deux cause: arbres en déclin (25) et foyer d'agents pathogènes (23).
 ## Identification des arbres abattus car foyer d'agents pathogènes
 
 ```{r}
-BDD_Abattus_renseignes_POSL%>% 
+BDD_Vivants_et_Abattus_renseignes_POSL %>% 
+  # Arbres abattus seulement
+  filter(Etat == "Abattu") %>% 
   group_by(MotifAbattage, EspeceFrancais) %>% 
   summarise(Nombre=n(), .groups='drop') %>% 
   arrange(desc(Nombre))
