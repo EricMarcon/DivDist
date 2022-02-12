@@ -1,0 +1,190 @@
+---
+title: "Cartes des Arbres du POSL"
+author:
+  - name: "Florence Puech"
+  - name: "Eric Marcon"
+abstract: >
+  Représentations spatiales du jeu de données.
+date: "`r format(Sys.time(), '%d %B %Y')`"
+url: https://GitHubID.github.io/Repository/
+github-repo: GitHubID/Repository
+# Language
+lang: en-US
+otherlangs: [fr-FR,it]
+# Bibliography
+bibliography: references.bib
+biblio-style: chicago
+# LaTeX
+preamble: >
+  \hyphenation{bio-di-ver-si-ty sap-lings}
+# Print table of contents in PDFs?
+pdftoc: false
+# If true, choose its depth
+toc-depth: 3
+# Do not modify
+always_allow_html: yes
+output:
+  bookdown::pdf_book:
+    template: latex/template.tex
+    citation_package: natbib
+    latex_engine: xelatex
+    keep_tex: yes
+  rmdformats::downcute:
+    use_bookdown: yes
+    lightbox: yes
+  bookdown::word_document2: default
+  bookdown::gitbook:
+    config:
+      download: "pdf"
+      sharing:
+        github: yes
+  bookdown::html_document2:
+    toc: yes
+    toc_float: yes
+---
+
+```{r DoNotModify, include=FALSE}
+### Utilities. Do not modify.
+# Installation of packages if necessary
+InstallPackages <- function(Packages) {
+  InstallPackage <- function(Package) {
+    if (!Package %in% installed.packages()[, 1]) {
+      install.packages(Package, repos="https://cran.rstudio.com/")
+    }
+  }
+  invisible(sapply(Packages, InstallPackage))
+}
+
+# Basic packages
+InstallPackages(c("bookdown", "formatR", "kableExtra", "ragg"))
+
+# kableExtra must be loaded 
+if (knitr::opts_knit$get("rmarkdown.pandoc.to") == "docx") {
+  # Word output (https://stackoverflow.com/questions/35144130/in-knitr-how-can-i-test-for-if-the-output-will-be-pdf-or-word)
+  # Do not use autoformat (https://github.com/haozhu233/kableExtra/issues/308)
+  options(kableExtra.auto_format = FALSE)
+}
+library("kableExtra")
+
+# Chunk font size hook: allows size='small' or any valid Latex font size in chunk options
+def.chunk.hook  <- knitr::knit_hooks$get("chunk")
+knitr::knit_hooks$set(chunk = function(x, options) {
+  x <- def.chunk.hook(x, options)
+  ifelse(options$size != "normalsize", paste0("\n \\", options$size,"\n\n", x, "\n\n \\normalsize"), x)
+})
+```
+
+```{r Options, include=FALSE}
+### Customized options for this document
+# Add necessary packages here
+Packages <- c("tidyverse", "rgdal", "dbmss")
+# Install them
+InstallPackages(Packages)
+
+# knitr options
+knitr::opts_chunk$set(
+  cache = FALSE,   # Cache chunk results
+  echo = TRUE,     # Show/Hide R chunks
+  warning = FALSE, # Show/Hide warnings
+  message = FALSE, # Show/Hide messages
+  # Figure alignment and size
+  fig.align = 'center', out.width = '80%',
+  # Graphic devices (ragg_png is better than standard png)
+  dev = c("ragg_png", "pdf"),
+  # Code chunk format
+  tidy = TRUE, tidy.opts = list(blank=FALSE, width.cutoff=50),
+  size = "scriptsize", knitr.graphics.auto_pdf = TRUE
+  )
+options(width = 50)
+
+# ggplot style
+library("tidyverse")
+theme_set(theme_bw())
+theme_update(panel.background=element_rect(fill="transparent", colour=NA),
+             plot.background=element_rect(fill="transparent", colour=NA))
+knitr::opts_chunk$set(dev.args=list(bg="transparent"))
+
+# Random seed
+set.seed(973)
+```
+
+Ce code crée des cartes en 2D et 3D du Parc Omnisport Suzanne Lenglen.
+
+# Données
+
+```{r}
+load("data/POSL.RData")
+```
+
+# Jeux de points
+
+## Genre-Espèce
+
+```{r}
+library("dbmss")
+BDD_Vivants_et_Abattus_renseignes_POSL %>% 
+  # Le poids est la surface terrière
+  mutate(PointWeight = Circonference^2/4/pi) %>% 
+  rename(PointType = GenrEsp) %>% 
+  as.wmppp(unitname = c("meter", "meters")) -> 
+  POSL_VA_wmppp
+```
+### Carte
+
+```{r}
+POSL_VA_wmppp %>% 
+  autoplot (alpha = 0.8, xlab = "X Lambert", ylab = "Y Lambert") +
+  labs(title = "Arbres vivants et abattus du POSL") +
+  labs(color = "Espèce", size = "Surface terrière")
+```
+
+### Vue en 2D
+
+```{r}
+BDD_Vivants_et_Abattus_renseignes_POSL %>% 
+  ggplot(aes(x=X, y=Y)) + 
+  geom_point() + 
+  geom_density_2d() + 
+  ggtitle("Arbres vivants et abattus du POSL") 
+
+```
+
+## Cause de l'abattage
+
+```{r}
+BDD_Vivants_et_Abattus_renseignes_POSL %>% 
+  # Arbres abattus seulement
+  filter(Etat == "Abattu") %>% 
+  # Le poids est la surface terrière
+  mutate(PointWeight = Circonference^2/4/pi) %>% 
+  mutate(MotifAbattage2=str_replace_all(
+    MotifAbattage, "Arbre.*", "Arbre en déclin physiologique irréversible"
+    )) %>% 
+  mutate(PointType=str_replace_all(
+    MotifAbattage2, "Foyer.*", "Foyer d'agent(s) pathogène(s)"
+    )) %>% 
+  as.wmppp(unitname = c("meter", "meters")) -> 
+  POSL_A_wmppp
+```
+### Carte
+
+```{r}
+POSL_A_wmppp %>% 
+  autoplot (alpha = 0.8, xlab = "X Lambert", ylab = "Y Lambert") +
+  labs(title = "Arbres abattus du POSL") +
+  labs(color = "Cause", size = "Surface terrière")
+```
+
+
+# Carte 3D densité arbres vivants et abattus à POSL
+
+```{r}
+Density_POSL <-  density(POSL_VA_wmppp, bw.diggle(POSL_VA_wmppp), dimyx=c(128, 128))
+par(mar = c(0, 0, 0, 0))
+persp.im(Density_POSL , shade = 0.5,
+         scale = FALSE, axes = TRUE,
+         border = NA, box = FALSE,
+         phi = 60,  
+         main = "") -> Projection
+```
+

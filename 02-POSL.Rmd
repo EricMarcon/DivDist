@@ -1,0 +1,184 @@
+---
+title: "Exploration des données du POSL"
+author:
+  - name: "Florence Puech"
+  - name: "Eric Marcon"
+abstract: >
+  Statistiques diverses sur le jeu de données.
+date: "`r format(Sys.time(), '%d %B %Y')`"
+url: https://GitHubID.github.io/Repository/
+github-repo: GitHubID/Repository
+# Language
+lang: en-US
+otherlangs: [fr-FR,it]
+# Bibliography
+bibliography: references.bib
+biblio-style: chicago
+# LaTeX
+preamble: >
+  \hyphenation{bio-di-ver-si-ty sap-lings}
+# Print table of contents in PDFs?
+pdftoc: false
+# If true, choose its depth
+toc-depth: 3
+# Do not modify
+always_allow_html: yes
+output:
+  bookdown::pdf_book:
+    template: latex/template.tex
+    citation_package: natbib
+    latex_engine: xelatex
+    keep_tex: yes
+  rmdformats::downcute:
+    use_bookdown: yes
+    lightbox: yes
+  bookdown::word_document2: default
+  bookdown::gitbook:
+    config:
+      download: "pdf"
+      sharing:
+        github: yes
+  bookdown::html_document2:
+    toc: yes
+    toc_float: yes
+---
+
+```{r DoNotModify, include=FALSE}
+### Utilities. Do not modify.
+# Installation of packages if necessary
+InstallPackages <- function(Packages) {
+  InstallPackage <- function(Package) {
+    if (!Package %in% installed.packages()[, 1]) {
+      install.packages(Package, repos="https://cran.rstudio.com/")
+    }
+  }
+  invisible(sapply(Packages, InstallPackage))
+}
+
+# Basic packages
+InstallPackages(c("bookdown", "formatR", "kableExtra", "ragg"))
+
+# kableExtra must be loaded 
+if (knitr::opts_knit$get("rmarkdown.pandoc.to") == "docx") {
+  # Word output (https://stackoverflow.com/questions/35144130/in-knitr-how-can-i-test-for-if-the-output-will-be-pdf-or-word)
+  # Do not use autoformat (https://github.com/haozhu233/kableExtra/issues/308)
+  options(kableExtra.auto_format = FALSE)
+}
+library("kableExtra")
+
+# Chunk font size hook: allows size='small' or any valid Latex font size in chunk options
+def.chunk.hook  <- knitr::knit_hooks$get("chunk")
+knitr::knit_hooks$set(chunk = function(x, options) {
+  x <- def.chunk.hook(x, options)
+  ifelse(options$size != "normalsize", paste0("\n \\", options$size,"\n\n", x, "\n\n \\normalsize"), x)
+})
+```
+
+```{r Options, include=FALSE}
+### Customized options for this document
+# Add necessary packages here
+Packages <- c("tidyverse", "rgdal")
+# Install them
+InstallPackages(Packages)
+
+# knitr options
+knitr::opts_chunk$set(
+  cache = FALSE,   # Cache chunk results
+  echo = TRUE,     # Show/Hide R chunks
+  warning = FALSE, # Show/Hide warnings
+  message = FALSE, # Show/Hide messages
+  # Figure alignment and size
+  fig.align = 'center', out.width = '80%',
+  # Graphic devices (ragg_png is better than standard png)
+  dev = c("ragg_png", "pdf"),
+  # Code chunk format
+  tidy = TRUE, tidy.opts = list(blank=FALSE, width.cutoff=50),
+  size = "scriptsize", knitr.graphics.auto_pdf = TRUE
+  )
+options(width = 50)
+
+# ggplot style
+library("tidyverse")
+theme_set(theme_bw())
+theme_update(panel.background=element_rect(fill="transparent", colour=NA),
+             plot.background=element_rect(fill="transparent", colour=NA))
+knitr::opts_chunk$set(dev.args=list(bg="transparent"))
+
+# Random seed
+set.seed(973)
+```
+
+# Données
+
+```{r}
+load("data/POSL.RData")
+```
+
+# Stats descriptives des arbres du POSL
+
+## Arbres vivants les plus fréquents (nom latin)
+
+```{r}
+BDD_Vivants_renseignes_POSL%>% 
+  group_by(GenrEsp) %>% 
+  summarise(Nombre=n(), .groups='drop') %>% 
+  arrange(desc(Nombre)) 
+```
+Le tilleul à grandes feuilles (*Tilia platyphyllos*) et l'érable plane (*Acer platanoides*) sont les plus présents.
+L'érable sycomore(*Acer pseudoplatanus*) arrive en 3ème position.
+
+
+## Arbres vivants les plus fréquents pour les non initiés
+
+```{r}
+BDD_Vivants_renseignes_POSL%>% 
+  group_by(EspeceFrancais) %>% 
+  summarise(Nombre=n(), .groups='drop') %>% 
+  arrange(desc(Nombre))
+```
+
+## Arbres abattus les plus fréquents (nom latin)
+
+```{r}
+BDD_Abattus_renseignes_POSL%>% 
+  group_by(GenrEsp) %>% 
+  summarise(Nombre=n(), .groups='drop') %>% 
+  arrange(desc(Nombre))
+```
+
+Surreprésentation des érables sycomores (*Acer pseudoplatanus*) dans les arbres abattus (21/48).
+
+
+# Arbres abattus les plus fréquents pour les non initiés
+
+```{r}
+BDD_Abattus_renseignes_POSL%>% 
+  group_by(EspeceFrancais) %>% 
+  summarise(Nombre=n(), .groups='drop') %>% 
+  arrange(desc(Nombre))
+```
+
+Les érables représentent plus de la moitié des arbres abattus (26/48).
+
+
+## Causes de l'abattage
+
+```{r}
+BDD_Abattus_renseignes_POSL%>% 
+  group_by(MotifAbattage) %>% 
+  summarise(Nombre=n(), .groups='drop') %>% 
+  arrange(desc(Nombre))
+```
+
+Deux cause: arbres en déclin (25) et foyer d'agents pathogènes (23).
+
+
+## Identification des arbres abattus car foyer d'agents pathogènes
+
+```{r}
+BDD_Abattus_renseignes_POSL%>% 
+  group_by(MotifAbattage, EspeceFrancais) %>% 
+  summarise(Nombre=n(), .groups='drop') %>% 
+  arrange(desc(Nombre))
+```
+Les 23 arbres abattus sont tous des érables

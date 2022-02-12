@@ -1,0 +1,292 @@
+---
+title: "Arbres du POSL"
+author:
+  - name: "Florence Puech"
+  - name: "Eric Marcon"
+abstract: >
+  Constitution du jeu de données.
+date: "`r format(Sys.time(), '%d %B %Y')`"
+url: https://GitHubID.github.io/Repository/
+github-repo: GitHubID/Repository
+# Language
+lang: en-US
+otherlangs: [fr-FR,it]
+# Bibliography
+bibliography: references.bib
+biblio-style: chicago
+# LaTeX
+preamble: >
+  \hyphenation{bio-di-ver-si-ty sap-lings}
+# Print table of contents in PDFs?
+pdftoc: false
+# If true, choose its depth
+toc-depth: 3
+# Do not modify
+always_allow_html: yes
+output:
+  bookdown::pdf_book:
+    template: latex/template.tex
+    citation_package: natbib
+    latex_engine: xelatex
+    keep_tex: yes
+  rmdformats::downcute:
+    use_bookdown: yes
+    lightbox: yes
+  bookdown::word_document2: default
+  bookdown::gitbook:
+    config:
+      download: "pdf"
+      sharing:
+        github: yes
+  bookdown::html_document2:
+    toc: yes
+    toc_float: yes
+---
+
+```{r DoNotModify, include=FALSE}
+### Utilities. Do not modify.
+# Installation of packages if necessary
+InstallPackages <- function(Packages) {
+  InstallPackage <- function(Package) {
+    if (!Package %in% installed.packages()[, 1]) {
+      install.packages(Package, repos="https://cran.rstudio.com/")
+    }
+  }
+  invisible(sapply(Packages, InstallPackage))
+}
+
+# Basic packages
+InstallPackages(c("bookdown", "formatR", "kableExtra", "ragg"))
+
+# kableExtra must be loaded 
+if (knitr::opts_knit$get("rmarkdown.pandoc.to") == "docx") {
+  # Word output (https://stackoverflow.com/questions/35144130/in-knitr-how-can-i-test-for-if-the-output-will-be-pdf-or-word)
+  # Do not use autoformat (https://github.com/haozhu233/kableExtra/issues/308)
+  options(kableExtra.auto_format = FALSE)
+}
+library("kableExtra")
+
+# Chunk font size hook: allows size='small' or any valid Latex font size in chunk options
+def.chunk.hook  <- knitr::knit_hooks$get("chunk")
+knitr::knit_hooks$set(chunk = function(x, options) {
+  x <- def.chunk.hook(x, options)
+  ifelse(options$size != "normalsize", paste0("\n \\", options$size,"\n\n", x, "\n\n \\normalsize"), x)
+})
+```
+
+```{r Options, include=FALSE}
+### Customized options for this document
+# Add necessary packages here
+Packages <- c("tidyverse", "rgdal", "dbmss")
+# Install them
+InstallPackages(Packages)
+
+# knitr options
+knitr::opts_chunk$set(
+  cache = FALSE,   # Cache chunk results
+  echo = TRUE,     # Show/Hide R chunks
+  warning = FALSE, # Show/Hide warnings
+  message = FALSE, # Show/Hide messages
+  # Figure alignment and size
+  fig.align = 'center', out.width = '80%',
+  # Graphic devices (ragg_png is better than standard png)
+  dev = c("ragg_png", "pdf"),
+  # Code chunk format
+  tidy = TRUE, tidy.opts = list(blank=FALSE, width.cutoff=50),
+  size = "scriptsize", knitr.graphics.auto_pdf = TRUE
+  )
+options(width = 50)
+
+# ggplot style
+library("tidyverse")
+theme_set(theme_bw())
+theme_update(panel.background=element_rect(fill="transparent", colour=NA),
+             plot.background=element_rect(fill="transparent", colour=NA))
+knitr::opts_chunk$set(dev.args=list(bg="transparent"))
+
+# Random seed
+set.seed(973)
+```
+
+Ce code crée le tibble `BDD_Vivants_et_Abattus_renseignes_POSL` à partir des données de la Ville de Paris et le sauvegarde dans `data/POSL.Rdata`.
+
+# Données
+
+## Lecture et formatage
+
+Les données initiales sont sur le site d'opendata Paris mais les arbres abattus en 2021 ne sont plus dans la version actuelle.
+Il faut utiliser la base de 2021 et la base actuelle, toutes deux copiées dans `data/`.
+
+```{r}
+# Décompactage des fichiers GeoJson (ignorés par git parce que trop gros)
+unzip("data/les-arbres-2021.zip.zip", exdir="data/")
+unzip("data/les-arbres-abattus.zip", exdir="data/")
+
+library("rgdal")
+# Lecture des fichiers GeoJSon
+les_arbres <- readOGR("data/les-arbres-2021.geojson",
+                      encoding = "UTF-8", 
+                      use_iconv = TRUE)
+les_arbres_abattus <- readOGR("data/les-arbres-abattus.geojson", 
+                              encoding = "UTF-8", 
+                              use_iconv = TRUE)
+
+```
+
+Les données sont projetés dans le référentiel Lambert 93.
+```{r}
+library("tidyverse")
+# Projection des données dans le référentiel Lambert93 pour obtenir des coordonnées en mètres
+les_arbres_Lambert93 <- les_arbres %>% spTransform(CRS("+init=epsg:2154"))
+les_arbres_abattus_Lambert93 <- les_arbres_abattus %>% spTransform(CRS("+init=epsg:2154"))
+```
+
+## Contrôle
+
+Informations sur les objets.
+
+```{r}
+## Informations sur les jeux de données des arbres vivants et abattus obtenus
+class(les_arbres_abattus_Lambert93)
+class(les_arbres_Lambert93)
+
+# Noms des slots associés
+slotNames(les_arbres_abattus_Lambert93)
+slotNames(les_arbres_Lambert93)
+
+# Affichage des coordonnées Lambert93 
+head(les_arbres_abattus_Lambert93@coords) # des 5 premiers arbres abattus
+head(les_arbres_Lambert93@coords) # des 5 premiers arbres vivants
+
+# Affichage de l'étendue spatiale 
+les_arbres_abattus_Lambert93@bbox #  des arbres abattus
+les_arbres_Lambert93@bbox # des arbres vivants
+
+
+```
+
+# Préparation des jeux de données
+
+## Arbres vivants
+
+```{r}
+# Arbres vivants parisiens
+les_arbres_Lambert93@data %>%
+  as_tibble() %>% 
+  
+  bind_cols(as.data.frame(les_arbres_Lambert93@coords)) %>% 
+
+  filter(adresse == "PARC OMNISPORT SUZANNE LENGLEN / 7 BOULEVARD DES FRERES VOISIN") %>% 
+
+  select(-idemplacement, -typeemplacement, 
+         -adresse, -complementadresse,   
+         -geo_point_2d1, -geo_point_2d2,
+         -stadedeveloppement, -remarquable) %>%
+  # ID doit être numérique
+  mutate(ID=as.integer(idbase)) %>% 
+  mutate(GenrEsp=as.factor(paste(genre, espece))) %>%
+  mutate(Etat="Vivant") %>% # Ajout de l'état des arbres (vivants)
+  mutate(libellefrancais=as.factor(libellefrancais)) %>% 
+  mutate(genre=as.factor(genre)) %>% 
+  mutate(espece=as.factor(espece)) %>% 
+  mutate(MotifAbattage="") %>% # Ajout champs vide pour motif abattage (arbres vivants)
+  
+  rename(EspeceFrancais=libellefrancais,
+         Genre=genre,
+         Espece=espece,
+         Circonference=circonferenceencm,
+         Hauteur=hauteurenm,
+         X=coords.x1,
+         Y=coords.x2) %>% 
+  select(ID, Espece, EspeceFrancais, Genre, Circonference, Hauteur, MotifAbattage, X, Y, GenrEsp, Etat) -> 
+  BDD_Vivants_POSL
+```
+
+Sélection des arbres vivants dont l'espèce et le genre sont connus:
+```{r}
+BDD_Vivants_POSL  %>% 
+  filter(!is.na(Espece),!is.na(EspeceFrancais), !is.na(Genre)) %>% 
+  filter(EspeceFrancais != "Non spécifié") %>% 
+  filter(Espece != "n. sp.") ->
+  BDD_Vivants_renseignes_POSL
+```
+
+
+## Arbres abattus
+
+```{r}
+les_arbres_abattus_Lambert93@data %>%
+  as_tibble() %>% 
+  
+  bind_cols(as.data.frame(les_arbres_abattus_Lambert93@coords)) %>% 
+  
+  filter(adresse == "PARC OMNISPORT SUZANNE LENGLEN / 7 BOULEVARD DES FRERES VOISIN") %>% 
+  
+  select(-adresse, -especefutur, -datedernierabattage, -varieteoucultivarfutur,
+         -genrefutur, -geo_point_2d1, -geo_point_2d2) %>%
+  # ID doit être numérique
+  mutate(ID=as.integer(idbase)) %>% 
+  mutate(GenrEsp=as.factor(paste(genrearbreprecedent, especearbreprecedent))) %>% 
+  mutate(Etat="Abattu") %>% # Ajout Etat pour tous les arbres (abattus)
+  mutate(Circonference=NA) %>% # Ajout champs vide pour la Circonférence (données absentes)
+  mutate(Hauteur=NA) %>% # Ajout champs vide pour la Hauteur (données absentes)
+  mutate(libellefrancais=as.factor(libellefrancaisarbreprecedent)) %>% 
+  mutate(genre=as.factor(genrearbreprecedent)) %>% 
+  mutate(espece=as.factor(especearbreprecedent)) %>% 
+  
+    rename(Espece=especearbreprecedent,
+           EspeceFrancais=libellefrancaisarbreprecedent,
+           Genre=genrearbreprecedent,
+           Arrondissement=arrondissement,
+           Domanialité=domanialite,
+           MotifAbattage=motifabattagearbreprecedent,
+           X=coords.x1,
+           Y=coords.x2) %>% 
+  select(ID, Espece, EspeceFrancais, Genre, Circonference, Hauteur, MotifAbattage, X, Y, GenrEsp, Etat) ->
+  BDD_Abattus_POSL
+```
+
+Sélection des arbres abattus dont l'espèce et le genre sont connus:
+```{r}
+BDD_Abattus_POSL  %>% 
+  filter(!is.na(Espece),!is.na(EspeceFrancais), !is.na(Genre)) %>% 
+  filter(EspeceFrancais != "Non spécifié") %>% 
+  filter(Espece != "n. sp.") ->
+  BDD_Abattus_renseignes_POSL
+```
+
+
+## Fusion
+
+```{r}
+# Creation BDD avec arbres vivants et abattus du POSL
+BDD_Vivants_renseignes_POSL %>% 
+  # Elimination des arbres abattus de la liste des vivants
+  anti_join(BDD_Abattus_renseignes_POSL, by="ID") %>% 
+  rbind(BDD_Abattus_renseignes_POSL) %>% 
+  print -> 
+  BDD_Vivants_et_Abattus_renseignes_POSL
+```
+
+## Récupération des circonférences
+
+Les circonférences sont dans la base des arbres vivants, y compris pour les arbres abattus.
+
+```{r}
+BDD_Vivants_renseignes_POSL %>% 
+  select(ID, Circonference) -> 
+  Circonferences
+# Insertion des données
+library("magrittr")
+BDD_Vivants_et_Abattus_renseignes_POSL %<>% 
+  select(-Circonference) %>% 
+  inner_join(Circonferences, by="ID")
+```
+
+
+
+# Sauvegarde
+
+```{r}
+save(BDD_Vivants_et_Abattus_renseignes_POSL, file = "data/POSL.RData")
+```
