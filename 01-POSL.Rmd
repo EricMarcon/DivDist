@@ -21,15 +21,6 @@ output:
   bookdown::html_document2:
     toc: yes
     toc_float: yes
-  rmdformats::downcute:
-    use_bookdown: yes
-    lightbox: yes
-  bookdown::word_document2: default
-  bookdown::gitbook:
-    config:
-      download: "pdf"
-      sharing:
-        github: yes
   bookdown::pdf_book:
     template: latex/template.tex
     citation_package: natbib
@@ -71,7 +62,7 @@ knitr::knit_hooks$set(chunk = function(x, options) {
 ```{r Options, include=FALSE}
 ### Customized options for this document
 # Add necessary packages here
-Packages <- c("tidyverse", "rgdal", "dbmss")
+Packages <- c("tidyverse", "rgdal")
 # Install them
 InstallPackages(Packages)
 
