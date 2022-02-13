@@ -252,7 +252,7 @@ div.tocify {
 <h1 class="title toc-ignore">Arbres du POSL</h1>
 <h4 class="author">Florence Puech</h4>
 <h4 class="author">Eric Marcon</h4>
-<h4 class="date">12 février 2022</h4>
+<h4 class="date">13 février 2022</h4>
 <div class="abstract">
 <p class="abstract">Abstract</p>
 <p>Constitution du jeu de données.</p>
@@ -478,6 +478,24 @@ library(&quot;magrittr&quot;)
 BDD_Vivants_et_Abattus_renseignes_POSL %&lt;&gt;%
     select(-Circonference) %&gt;%
     inner_join(Circonferences, by = &quot;ID&quot;)</code></pre>
+<p></p>
+</div>
+<div id="etiquettes-courtes-pour-les-arbres-abattus" class="section level2" number="2.5">
+<h2><span class="header-section-number">2.5</span> Etiquettes courtes pour les arbres abattus</h2>
+<p></p>
+<pre class="r"><code># Remplacement non tidy des chaines longues pour
+# remplacer le code désactivé
+BDD_Vivants_et_Abattus_renseignes_POSL$MotifAbattage &lt;- str_replace(BDD_Vivants_et_Abattus_renseignes_POSL$MotifAbattage,
+    &quot;Arbre.*&quot;, &quot;Arbre en déclin physiologique irréversible&quot;)
+BDD_Vivants_et_Abattus_renseignes_POSL$MotifAbattage &lt;- str_replace(BDD_Vivants_et_Abattus_renseignes_POSL$MotifAbattage,
+    &quot;Foyer.*&quot;, &quot;Foyer d&#39;agent(s) pathogène(s)&quot;)</code></pre>
+<p></p>
+</div>
+<div id="factorisation" class="section level2" number="2.6">
+<h2><span class="header-section-number">2.6</span> Factorisation</h2>
+<p></p>
+<pre class="r"><code>BDD_Vivants_et_Abattus_renseignes_POSL$MotifAbattage &lt;- as.factor(BDD_Vivants_et_Abattus_renseignes_POSL$MotifAbattage)
+BDD_Vivants_et_Abattus_renseignes_POSL$Etat &lt;- as.factor(BDD_Vivants_et_Abattus_renseignes_POSL$Etat)</code></pre>
 <p></p>
 </div>
 </div>

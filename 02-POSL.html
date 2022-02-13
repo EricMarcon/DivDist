@@ -252,7 +252,7 @@ div.tocify {
 <h1 class="title toc-ignore">Exploration des données du POSL</h1>
 <h4 class="author">Florence Puech</h4>
 <h4 class="author">Eric Marcon</h4>
-<h4 class="date">12 février 2022</h4>
+<h4 class="date">13 février 2022</h4>
 <div class="abstract">
 <p class="abstract">Abstract</p>
 <p>Statistiques diverses sur le jeu de données.</p>
@@ -377,9 +377,9 @@ filter(Etat == &quot;Abattu&quot;) %&gt;%
     arrange(desc(Nombre))</code></pre>
 <pre><code>## # A tibble: 2 × 2
 ##   MotifAbattage                             Nombre
-##   &lt;chr&gt;                                      &lt;int&gt;
+##   &lt;fct&gt;                                      &lt;int&gt;
 ## 1 Arbre en déclin physiologique irréversib…     25
-## 2 Foyer d’agent(s) pathogène(s) prescrit(s…     23</code></pre>
+## 2 Foyer d&#39;agent(s) pathogène(s)                 23</code></pre>
 <p></p>
 <p>Deux cause: arbres en déclin (25) et foyer d’agents pathogènes (23).</p>
 </div>
@@ -394,8 +394,8 @@ filter(Etat == &quot;Abattu&quot;) %&gt;%
     arrange(desc(Nombre))</code></pre>
 <pre><code>## # A tibble: 7 × 3
 ##   MotifAbattage              EspeceFrancais Nombre
-##   &lt;chr&gt;                      &lt;fct&gt;           &lt;int&gt;
-## 1 Foyer d’agent(s) pathogèn… Erable             23
+##   &lt;fct&gt;                      &lt;fct&gt;           &lt;int&gt;
+## 1 Foyer d&#39;agent(s) pathogèn… Erable             23
 ## 2 Arbre en déclin physiolog… Cerisier à fl…     10
 ## 3 Arbre en déclin physiolog… Bouleau             6
 ## 4 Arbre en déclin physiolog… Erable              3
