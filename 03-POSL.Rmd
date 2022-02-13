@@ -114,6 +114,7 @@ BDD_Vivants_et_Abattus_renseignes_POSL %>%
   as.wmppp(unitname = c("meter", "meters")) -> 
   POSL_VA_wmppp
 ```
+
 ### Carte
 
 ```{r}
@@ -132,6 +133,25 @@ BDD_Vivants_et_Abattus_renseignes_POSL %>%
   geom_density_2d() + 
   ggtitle("Arbres vivants et abattus du POSL") 
 
+```
+
+## Abattus-vivants
+
+```{r}
+BDD_Vivants_et_Abattus_renseignes_POSL %>% 
+  # Le poids est la surface terrière
+  mutate(PointWeight = Circonference^2/4/pi) %>% 
+  rename(PointType = Etat) %>% 
+  as.wmppp(unitname = c("meter", "meters")) -> 
+  POSL_AV_wmppp
+```
+### Carte
+
+```{r}
+POSL_AV_wmppp %>% 
+  autoplot (alpha = 0.8, xlab = "X Lambert", ylab = "Y Lambert") +
+  labs(title = "Arbres vivants et abattus du POSL") +
+  labs(color = "Espèce", size = "Surface terrière")
 ```
 
 ## Cause de l'abattage
