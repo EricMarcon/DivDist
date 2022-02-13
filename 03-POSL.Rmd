@@ -1,10 +1,10 @@
 ---
-title: "Cartes des Arbres du POSL"
+title: "Analyse spatiale des Arbres du POSL"
 author:
   - name: "Florence Puech"
   - name: "Eric Marcon"
 abstract: >
-  Représentations spatiales du jeu de données.
+  Représentations spatiales du jeu de données et dbmss.
 date: "`r format(Sys.time(), '%d %B %Y')`"
 url: https://GitHubID.github.io/Repository/
 github-repo: GitHubID/Repository
@@ -124,6 +124,28 @@ POSL_VA_wmppp %>%
   labs(color = "Espèce", size = "Surface terrière")
 ```
 
+
+## Nom vernaculaire des espèces
+
+```{r}
+BDD_Vivants_et_Abattus_renseignes_POSL %>% 
+  # Le poids est la surface terrière
+  mutate(PointWeight = Circonference^2/4/pi) %>% 
+  rename(PointType = EspeceFrancais) %>% 
+  as.wmppp(unitname = c("meter", "meters")) -> 
+  POSL_Esp_wmppp
+```
+
+### Carte
+
+```{r}
+POSL_Esp_wmppp %>% 
+  autoplot (alpha = 0.8, xlab = "X Lambert", ylab = "Y Lambert") +
+  labs(title = "Arbres du POSL") +
+  labs(color = "Espèce", size = "Surface terrière")
+```
+
+
 ### Vue en 2D
 
 ```{r}
@@ -143,12 +165,12 @@ BDD_Vivants_et_Abattus_renseignes_POSL %>%
   mutate(PointWeight = Circonference^2/4/pi) %>% 
   rename(PointType = Etat) %>% 
   as.wmppp(unitname = c("meter", "meters")) -> 
-  POSL_AV_wmppp
+  BDD_V2022_A2022_Poids_POSL_wmppp
 ```
 ### Carte
 
 ```{r}
-POSL_AV_wmppp %>% 
+BDD_V2022_A2022_Poids_POSL_wmppp %>% 
   autoplot (alpha = 0.8, xlab = "X Lambert", ylab = "Y Lambert") +
   labs(title = "Arbres vivants et abattus du POSL") +
   labs(color = "Espèce", size = "Surface terrière")
@@ -157,41 +179,16 @@ POSL_AV_wmppp %>%
 ## Cause de l'abattage
 
 ```{r}
-# Remplacement non tidy des chaines longues pour remplacer le code désactivé
-BDD_Vivants_et_Abattus_renseignes_POSL$MotifAbattage <- 
-  str_replace(
-    BDD_Vivants_et_Abattus_renseignes_POSL$MotifAbattage, 
-    "Arbre.*", 
-    "Arbre en déclin physiologique irréversible"
-    )
-BDD_Vivants_et_Abattus_renseignes_POSL$MotifAbattage <- 
-  str_replace(
-    BDD_Vivants_et_Abattus_renseignes_POSL$MotifAbattage, 
-    "Foyer.*", 
-    "Foyer d'agent(s) pathogène(s)"
-    )
-
 # Création du jeu de points
 BDD_Vivants_et_Abattus_renseignes_POSL %>% 
   # Arbres abattus seulement
   filter(Etat == "Abattu") %>% 
   # Le poids est la surface terrière
   mutate(PointWeight = Circonference^2 /4 /pi) %>% 
-  # mutate(MotifAbattage2 = str_replace(
-  #   MotifAbattage, "Arbre.*", "Arbre en déclin physiologique irréversible"
-  #   )) %>%
-  # mutate(PointType = str_replace(
-  #   MotifAbattage2, "Foyer.*", "Foyer d'agent(s) pathogène(s)"
-  #   )) %>%
-  # Temporaire
   rename(PointType = MotifAbattage) %>% 
   as.wmppp(unitname = c("meter", "meters")) -> 
   POSL_A_wmppp
 ```
-
-Le remplacement du texte long par un texte court fonctionne dans la console mais pas avec knitr : désactivé le temps de trouver la cause.
-
-
 ### Carte
 
 ```{r}
@@ -214,3 +211,379 @@ persp.im(Density_POSL , shade = 0.5,
          main = "") -> Projection
 ```
 
+
+# Concentration spatiale
+
+## Question 1-a : les arbres abattus du POSL sont-ils plus concentrés qu'une distribution aléatoire ?
+
+```{r}
+K_Abattus <- KEnvelope(POSL_A_wmppp, NumberOfSimulations=1000, Alpha=0.01, Global=TRUE)
+plot(K_Abattus,legend = FALSE,
+     xlab="Distance (mètres)", ylab="K(Distance)",
+     main="K de Ripley \n Arbres abattus en 2021 dans le POSL")
+legend("topleft",c("K", expression(alpha=='1%, IC global'), "Centre IC"),
+       col = c("black", "grey", "red"), lty = c(1, 1, 8), lwd = c(1, 10, 1), bty = "n",
+       text.col = "black", horiz = FALSE, inset=0.04)
+autoplot(K_Abattus)
+```
+
+Conclusion : interactions détectée entre les arbres abattus : attraction.
+Les arbres abattus sont plus concentrés qu'une distribution complètement aléatoire.
+
+```{r}
+persp(density(POSL_A_wmppp),
+      col="aliceblue", # couleur triste = arbres abattus
+      theta = 40, phi = 20,
+      xlab = "Lambert X", ylab = "Lambert Y", zlab = "Densité",
+      main = "Densité arbres abattus en 2021 dans le POSL")
+```
+
+## Question 1-b : les arbres vivants du POSL sont-ils plus concentrés qu'une distribution aléatoire ?
+
+```{r}
+K_Vivants <- KEnvelope(POSL_Esp_wmppp,  NumberOfSimulations=1000, Alpha=0.01, Global=TRUE)
+plot(K_Vivants,
+     legend = FALSE,
+     xlab="Distance (mètres)", ylab="K(Distance)",
+     main="K de Ripley \n Arbres vivants en 2022 dans le POSL")
+legend("topleft",c("K", expression(alpha=='1%, IC global'), "Centre IC"),
+       col = c("black", "grey", "red"), lty = c(1, 1, 8), lwd = c(1, 10, 1), bty = "n",
+       text.col = "black", horiz = FALSE, inset=0.04)
+autoplot(K_Vivants)
+```
+
+Conclusion : interactions détectée entre les arbres vivants : attraction.
+Les arbres vivants sont plus concentrés qu'une distribution complètement aléatoire.
+
+
+## Question 2 : les arbres abattus du POSL sont-ils plus concentrés que les vivants ?
+
+### mCas_contrôles pour les abattus
+
+```{r}
+m_Abattus <- mEnvelope(BDD_V2022_A2022_Poids_POSL_wmppp,
+                         NumberOfSimulations=1000,
+                         Alpha=0.01,
+                         ReferenceType = "Abattu",
+                         SimulationType = "RandomLocation",
+                         Global=TRUE)
+
+plot(m_Abattus,
+     xlab="Distance (mètres)", ylab="m(Distance)",
+     legend = FALSE,
+     main="m de Lang et al. \n Arbres abattus par rapport aux vivants dans le POSL")
+legend("topright",c("m", expression(alpha=='1%, ICg    '), "Centre IC"),
+       col = c("black", "grey", "red"),lty = c(1, 1, 8), lwd = c(1, 10, 1), bty = "n",
+       text.col = "black", horiz = FALSE, inset=-0.02)
+autoplot(m_Abattus)
+```
+
+Conclusions :
+
+- NS avec alpha 1% et 1000 sim
+- avec alpha 10% concentration sign entre 175m et 200m avec 1000 sim, presque plus sign avec 10000 sim.
+
+### MCas_contrôles pour les abattus
+
+```{r}
+M_Abattus <- MEnvelope(BDD_V2022_A2022_Poids_POSL_wmppp,
+                         NumberOfSimulations=1000,
+                         Alpha=0.01,
+                         ReferenceType = "Abattu",
+                         SimulationType = "RandomLocation",
+                         Global=TRUE)
+plot(M_Abattus,
+     legend = FALSE,
+     xlab="Distance (mètres)", ylab="M(Distance)",
+     xlim=c(0,50),
+     main="M de Marcon et Puech \n Arbres abattus par rapport aux vivants dans le POSL")
+legend("topright",c("M", expression(alpha=='1%, IC global'), "Centre IC"),
+       col = c("black", "grey", "red"), lty = c(1, 1, 8), lwd = c(1, 10, 1), bty = "n",
+       text.col = "black", horiz = FALSE, inset=0.1)
+plot(M_Abattus)
+```
+
+
+Conclusion : un peu conc sign autour de 5m.
+    
+Attention :  attention warning message lors de la compil.
+```
+Warning messages: 1: In FUN(newX[, i], ...) :
+aucun argument trouvé pour min ; Inf est renvoyé"
+```
+
+## Question 3 : les malades sont-ils plus concentrés ceux en délin par rapport aux vivants ?
+
+### Question 3-a : REFERENTIEL : ARBRES VIVANTS et ABATTUS POUR AUTRES MOTIFS
+
+Modification du code : utiliser `POSL_A_wmppp` plutôt que `BDD_V2022_A2022_Poids_POSL_wmppp2`.
+
+#### M déclin
+
+```{r}
+M_Declin <- MEnvelope(POSL_A_wmppp,
+                         NumberOfSimulations=1000,
+                         Alpha=0.01,
+                         ReferenceType = "Arbre en déclin physiologique irréversible",
+                         SimulationType = "RandomLocation",
+                         Global=TRUE)
+
+
+plot(M_Declin,
+     legend = FALSE,
+     xlim=c(0,30),
+     xlab="Distance (mètres)", ylab="M(Distance)",
+     main="M de Marcon et Puech \n Arbres en déclin par rapport aux vivants et malades dans le POSL")
+legend("topright",c("M", expression(alpha=='1%, IC global'), "Centre IC"),
+       col = c("black", "grey", "red"), lty = c(1, 1, 8), lwd = c(1, 10, 1), bty = "n",
+       text.col = "black", horiz = FALSE, inset=0.1)
+autoplot(M_Declin)
+```
+
+Conclusion : NS ???
+Attention : warnings sur FUN
+
+#### m déclin
+
+```{r}
+m_Declin <- mEnvelope(POSL_A_wmppp,
+                         NumberOfSimulations=1000,
+                         Alpha=0.01,
+                         ReferenceType = "Arbre en déclin physiologique irréversible",
+                         SimulationType = "RandomLocation",
+                         Global=TRUE)
+
+plot(m_Declin,
+     legend = FALSE,
+     xlab="Distance (mètres)", ylab="m(Distance)",
+     main="m de Lang et al. \n Arbres en déclin par rapport aux vivants et malades dans le POSL")
+legend("topright",c("m", expression(alpha=='1%, IC global'), "Centre IC"),
+       col = c("black", "grey", "red"), lty = c(1, 1, 8), lwd = c(1, 10, 1), bty = "n",
+       text.col = "black", horiz = FALSE, inset=0.05)
+autoplot(m_Declin)
+```
+
+Conclusion : conc sign jusqu'à 100m puis jusqu'à 250m.
+
+#### M malade
+
+```{r}
+M_Malades <- MEnvelope(POSL_A_wmppp,
+                         NumberOfSimulations=1000,
+                         Alpha=0.01,
+                         ReferenceType = "Foyer d'agent(s) pathogène(s)",
+                         SimulationType = "RandomLocation",
+                         Global=TRUE)
+
+
+plot(M_Malades,
+     legend = FALSE,
+     xlim=c(0,75),
+     xlab="Distance (mètres)", ylab="M(Distance)",
+     main="M de Marcon et Puech \n Arbres malades par rapport aux vivants \n et autres abattus dans le POSL")
+legend("topright",c("M", expression(alpha=='1%, IC global'), "Centre IC"),
+       col = c("black", "grey", "red"), lty = c(1, 1, 8), lwd = c(1, 10, 1), bty = "n",
+       text.col = "black", horiz = FALSE, inset=0.1)
+autoplot(M_Malades)
+```
+
+Conclusion : conc à petites distances (environ 10m) ???
+Attention : warnings FUN
+
+
+#### m malade
+
+```{r}
+m_Malades <- mEnvelope(POSL_A_wmppp,
+                         NumberOfSimulations=1000,
+                         Alpha=0.01,
+                         ReferenceType = "Foyer d'agent(s) pathogène(s)",
+                         SimulationType = "RandomLocation",
+                         Global=TRUE)
+plot(m_Malades,
+     legend = FALSE,
+     xlab="Distance (mètres)", ylab="m(Distance)",
+     main="m de Lang et al. \n Arbres malades par rapport aux vivants\n et aux autres abattus dans le POSL")
+     legend("topright",c("m", expression(alpha=='1%, ICg'), "Centre IC"),
+     col = c("black", "grey", "red"), lty = c(1, 1, 8), lwd = c(1, 10, 1), bty = "n",
+     text.col = "black", horiz = FALSE, inset=0.05)
+autoplot(m_Malades)
+```
+
+### Question 3-b : REFERENTIEL : UNIQUEMENT LES ARBRES VIVANTS
+
+#### Jeux de points
+
+Création de la BDD sans les 25 arbres en déclin donc contient vivant et abattus-patho :
+
+```{r}
+BDD_Vivants_et_Abattus_renseignes_POSL %>% 
+  # Le poids est la surface terrière
+  mutate(PointWeight = Circonference^2/4/pi) %>% 
+  filter(MotifAbattage != "Arbre en déclin physiologique irréversible") %>% 
+  mutate(PointType = ifelse(Etat=="Vivant", "Vivant", "Foyer d'agent(s) pathogène(s)")) %>% 
+  as.wmppp(unitname = c("meter", "meters")) -> 
+  BDD_V2022_A2022_Poids_POSL_sans_abattus_declin_wmppp
+autoplot(BDD_V2022_A2022_Poids_POSL_sans_abattus_declin_wmppp)
+```
+Création de la BDD sans les 23 arbres foyer patho donc reste uniquement vivants et en déclin:
+
+```{r}
+BDD_Vivants_et_Abattus_renseignes_POSL %>% 
+  # Le poids est la surface terrière
+  mutate(PointWeight = Circonference^2/4/pi) %>% 
+  filter(MotifAbattage != "Foyer d'agent(s) pathogène(s)") %>% 
+  mutate(PointType = ifelse(Etat=="Vivant", "Vivant", "Arbre en déclin physiologique irréversible")) %>% 
+  as.wmppp(unitname = c("meter", "meters")) -> 
+  BDD_V2022_A2022_Poids_POSL_sans_patho_wmppp
+autoplot(BDD_V2022_A2022_Poids_POSL_sans_patho_wmppp)
+```
+
+
+
+#### M malades
+
+
+```{r}
+M_Malades <- MEnvelope(BDD_V2022_A2022_Poids_POSL_sans_abattus_declin_wmppp,
+                       NumberOfSimulations=1000,
+                       Alpha=0.01,
+                       ReferenceType = "Foyer d'agent(s) pathogène(s)",
+                       SimulationType = "RandomLocation",
+                       Global=TRUE)
+plot(M_Malades,
+     legend = FALSE,
+     xlim=c(0,20),
+     xlab="Distance (mètres)", ylab="M(Distance)",
+     main="M de Marcon et Puech \n Arbres malades par rapport aux vivants (uniquement) dans le POSL")
+legend("topright",c("M", expression(alpha=='1%, IC global'), "Centre IC"),
+       col = c("black", "grey", "red"), lty = c(1, 1, 8), lwd = c(1, 10, 1), bty = "n",
+       text.col = "black", horiz = FALSE, inset=0.1)
+autoplot(M_Malades)
+```
+
+Conclusion : conc sign entre 6m et 8m et M est alors = 10 ou 11 !!!
+Remarque : warning fun.
+
+#### m malades
+
+```{r}
+m_Malades <- mEnvelope(BDD_V2022_A2022_Poids_POSL_sans_abattus_declin_wmppp,
+                       NumberOfSimulations=1000,
+                       Alpha=0.01,
+                       ReferenceType = "Foyer d'agent(s) pathogène(s)",
+                       SimulationType = "RandomLocation",
+                       Global=TRUE)
+
+plot(m_Malades,
+     legend = FALSE,
+     xlab="Distance (mètres)", ylab="m(Distance)",
+     main="m de Lang et al. \n Arbres malades par rapport aux vivants (uniquement) dans le POSL")
+legend("topright",c("m", expression(alpha=='1%, ICg'), "Centre IC"),
+       col = c("black", "grey", "red"), lty = c(1, 1, 8), lwd = c(1, 10, 1), bty = "n",
+       text.col = "black", horiz = FALSE, inset=0.05)
+autoplot(m_Malades)
+```
+
+#### M déclin
+
+```{r}
+M_Declin <- MEnvelope(BDD_V2022_A2022_Poids_POSL_sans_patho_wmppp,
+                      NumberOfSimulations=1000,
+                      Alpha=0.01,
+                      ReferenceType = "Arbre en déclin physiologique irréversible",
+                      SimulationType = "RandomLocation",
+                      Global=TRUE)
+plot(M_Declin,
+     legend = FALSE,
+     xlim=c(0,30),
+     xlab="Distance (mètres)", ylab="M(Distance)",
+     main="M de Marcon et Puech \n Arbres en déclin par rapport aux vivants (uniquement) dans le POSL")
+legend("topright",c("M", expression(alpha=='1%, IC global'), "Centre IC"),
+       col = c("black", "grey", "red"), lty = c(1, 1, 8), lwd = c(1, 10, 1), bty = "n",
+       text.col = "black", horiz = FALSE, inset=0.1)
+autoplot(M_Declin)
+```
+
+#### m déclin
+
+```{r}
+m_Declin <- mEnvelope(BDD_V2022_A2022_Poids_POSL_sans_patho_wmppp,
+                      NumberOfSimulations=1000,
+                      Alpha=0.01,
+                      ReferenceType = "Arbre en déclin physiologique irréversible",
+                      SimulationType = "RandomLocation",
+                      Global=TRUE)
+
+
+plot(m_Declin,
+     legend = FALSE,
+     xlab="Distance (mètres)", ylab="m(Distance)",
+     main="m de Lang et al. \n Arbres en déclin par rapport aux vivants (uniquement) dans le POSL")
+legend("topright",c("m", expression(alpha=='1%, IC global'), "Centre IC"),
+       col = c("black", "grey", "red"), lty = c(1, 1, 8), lwd = c(1, 10, 1), bty = "n",
+       text.col = "black", horiz = FALSE, inset=0.05)
+autoplot(m_Declin)
+```
+
+
+## Question 4 : les érables malades sont-ils plus concentrés que les érables vivants ?
+
+### Jeu de points
+
+```{r}
+BDD_Vivants_et_Abattus_renseignes_POSL %>% 
+  filter(EspeceFrancais == "Erable") %>% 
+  # Le poids est la surface terrière
+  mutate(PointWeight = Circonference^2/4/pi) %>% 
+  filter(MotifAbattage != "Arbre en déclin physiologique irréversible") %>% 
+  mutate(PointType = ifelse(Etat=="Vivant", "Vivant", "Abattu")) %>% 
+  as.wmppp(unitname = c("meter", "meters")) -> 
+  BDD_V2022_A2022_Poids_POSL_erables_VPatho_wmppp
+autoplot(BDD_V2022_A2022_Poids_POSL_erables_VPatho_wmppp)
+```
+#### M érables foyer patho
+
+```{r}
+M_erables <- MEnvelope(BDD_V2022_A2022_Poids_POSL_erables_VPatho_wmppp,
+                      NumberOfSimulations=1000,
+                      Alpha=0.1,  # attention : 10% ici
+                      ReferenceType = "Abattu",
+                      SimulationType = "RandomLocation",
+                      Global=TRUE)
+plot(M_erables,
+     legend = FALSE,
+     xlim=c(0,30),
+     xlab="Distance (mètres)", ylab="M(Distance)",
+     main="M de Marcon et Puech \n Erables malades par rapport aux érables vivants dans le POSL")
+legend("topright",c("M", expression(alpha=='10%, IC global'), "Centre IC"),
+       col = c("black", "grey", "red"), lty = c(1, 1, 8), lwd = c(1, 10, 1), bty = "n",
+       text.col = "black", horiz = FALSE, inset=0.1)
+
+autoplot(M_erables)
+```
+
+Conclusion : sign conc à 6m à 1000 sim et alpha = 10%, très légèrement sign pour alpha = 1%.
+
+#### m érables patho
+
+```{r}
+m_erables <- mEnvelope(BDD_V2022_A2022_Poids_POSL_erables_VPatho_wmppp,
+                      NumberOfSimulations=1000,
+                      Alpha=0.1, # attention : 10% ici
+                      ReferenceType = "Abattu",
+                      SimulationType = "RandomLocation",
+                      Global=TRUE)
+
+plot(m_erables,
+     legend = FALSE,
+     xlab="Distance (mètres)", ylab="m(Distance)",
+     main="m de Lang et al. \n Erables malades par rapport aux érables vivants dans le POSL")
+legend("topright",c("m", expression(alpha=='10%, IC global'), "Centre IC"),
+       col = c("black", "grey", "red"), lty = c(1, 1, 8), lwd = c(1, 10, 1), bty = "n",
+       text.col = "black", horiz = FALSE, inset=0.01)
+
+autoplot(m_erables)
+```
+
+Conclusion : NS si alpha 1%, NS le plus souvent si alpha = 10%

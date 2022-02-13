@@ -269,6 +269,33 @@ BDD_Vivants_et_Abattus_renseignes_POSL %<>%
 ```
 
 
+## Etiquettes courtes pour les arbres abattus
+
+```{r}
+# Remplacement non tidy des chaines longues pour remplacer le code désactivé
+BDD_Vivants_et_Abattus_renseignes_POSL$MotifAbattage <- 
+  str_replace(
+    BDD_Vivants_et_Abattus_renseignes_POSL$MotifAbattage, 
+    "Arbre.*", 
+    "Arbre en déclin physiologique irréversible"
+    )
+BDD_Vivants_et_Abattus_renseignes_POSL$MotifAbattage <- 
+  str_replace(
+    BDD_Vivants_et_Abattus_renseignes_POSL$MotifAbattage, 
+    "Foyer.*", 
+    "Foyer d'agent(s) pathogène(s)"
+    )
+```
+
+## Factorisation
+
+```{r}
+BDD_Vivants_et_Abattus_renseignes_POSL$MotifAbattage <-
+  as.factor(BDD_Vivants_et_Abattus_renseignes_POSL$MotifAbattage)
+BDD_Vivants_et_Abattus_renseignes_POSL$Etat <-
+  as.factor(BDD_Vivants_et_Abattus_renseignes_POSL$Etat)
+```
+
 
 # Sauvegarde
 
