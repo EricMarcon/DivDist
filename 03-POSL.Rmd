@@ -316,19 +316,27 @@ aucun argument trouvé pour min ; Inf est renvoyé"
 
 ### Question 3-a : REFERENTIEL : ARBRES VIVANTS et ABATTUS POUR AUTRES MOTIFS
 
-Modification du code : utiliser `POSL_A_wmppp` plutôt que `BDD_V2022_A2022_Poids_POSL_wmppp2`.
+Création de la BDD  :
+
+```{r}
+BDD_Vivants_et_Abattus_renseignes_POSL %>% 
+  # Le poids est la surface terrière
+  mutate(PointWeight = Circonference^2/4/pi) %>% 
+  mutate(PointType = ifelse(Etat=="Vivant", "Vivant", as.character(MotifAbattage))) %>% 
+  as.wmppp(unitname = c("meter", "meters")) -> 
+  BDD_V2022_A2022_Poids_POSL_wmppp2
+autoplot(BDD_V2022_A2022_Poids_POSL_wmppp2)
+```
 
 #### M déclin
 
 ```{r}
-M_Declin <- MEnvelope(POSL_A_wmppp,
+M_Declin <- MEnvelope(BDD_V2022_A2022_Poids_POSL_wmppp2,
                          NumberOfSimulations=1000,
                          Alpha=0.01,
                          ReferenceType = "Arbre en déclin physiologique irréversible",
                          SimulationType = "RandomLocation",
                          Global=TRUE)
-
-
 plot(M_Declin,
      legend = FALSE,
      xlim=c(0,30),
@@ -340,19 +348,17 @@ legend("topright",c("M", expression(alpha=='1%, IC global'), "Centre IC"),
 autoplot(M_Declin)
 ```
 
-Conclusion : NS ???
-Attention : warnings sur FUN
+Conclusion : NS.
 
 #### m déclin
 
 ```{r}
-m_Declin <- mEnvelope(POSL_A_wmppp,
+m_Declin <- mEnvelope(BDD_V2022_A2022_Poids_POSL_wmppp2,
                          NumberOfSimulations=1000,
                          Alpha=0.01,
                          ReferenceType = "Arbre en déclin physiologique irréversible",
                          SimulationType = "RandomLocation",
                          Global=TRUE)
-
 plot(m_Declin,
      legend = FALSE,
      xlab="Distance (mètres)", ylab="m(Distance)",
@@ -368,14 +374,12 @@ Conclusion : conc sign jusqu'à 100m puis jusqu'à 250m.
 #### M malade
 
 ```{r}
-M_Malades <- MEnvelope(POSL_A_wmppp,
+M_Malades <- MEnvelope(BDD_V2022_A2022_Poids_POSL_wmppp2,
                          NumberOfSimulations=1000,
                          Alpha=0.01,
                          ReferenceType = "Foyer d'agent(s) pathogène(s)",
                          SimulationType = "RandomLocation",
                          Global=TRUE)
-
-
 plot(M_Malades,
      legend = FALSE,
      xlim=c(0,75),
@@ -387,14 +391,14 @@ legend("topright",c("M", expression(alpha=='1%, IC global'), "Centre IC"),
 autoplot(M_Malades)
 ```
 
-Conclusion : conc à petites distances (environ 10m) ???
+Conclusion : conc à petites distances (environ 10m)
 Attention : warnings FUN
 
 
 #### m malade
 
 ```{r}
-m_Malades <- mEnvelope(POSL_A_wmppp,
+m_Malades <- mEnvelope(BDD_V2022_A2022_Poids_POSL_wmppp2,
                          NumberOfSimulations=1000,
                          Alpha=0.01,
                          ReferenceType = "Foyer d'agent(s) pathogène(s)",
@@ -474,7 +478,6 @@ m_Malades <- mEnvelope(BDD_V2022_A2022_Poids_POSL_sans_abattus_declin_wmppp,
                        ReferenceType = "Foyer d'agent(s) pathogène(s)",
                        SimulationType = "RandomLocation",
                        Global=TRUE)
-
 plot(m_Malades,
      legend = FALSE,
      xlab="Distance (mètres)", ylab="m(Distance)",
@@ -542,6 +545,7 @@ BDD_Vivants_et_Abattus_renseignes_POSL %>%
   BDD_V2022_A2022_Poids_POSL_erables_VPatho_wmppp
 autoplot(BDD_V2022_A2022_Poids_POSL_erables_VPatho_wmppp)
 ```
+
 #### M érables foyer patho
 
 ```{r}
