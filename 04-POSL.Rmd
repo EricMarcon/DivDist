@@ -170,8 +170,6 @@ BDD_Erables_Div %>%
 La diversité de Shannon à 25m est la même pour les victimes de la maladie de la suie que pour tous les érables. 
 Les érables en déclin ne sont que 3, donc pas de conclusion.
 
-L'hypothèse de vulnérabilité à cause d'une moindre diversité locale est rejetée.
-
-Les résultats sont fragiles : peu de données, beaucoup de facteurs non contrôlés.
-C'est surtout une démonstration de la méthode.
-
+Conclusion générale :
+- Les érables malades sont concentrés (même si le faible volume de données limite la puissance des tests), ce qui est attendu pour une maladie contagieuse,
+- L'hypothèse de vulnérabilité à cause d'une moindre diversité locale est rejetée, supportée par la littérature, est clairement rejetée.
