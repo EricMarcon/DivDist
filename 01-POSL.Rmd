@@ -147,7 +147,9 @@ head(les_arbres_Lambert93@coords) # des 5 premiers arbres vivants
 les_arbres_abattus_Lambert93@bbox #  des arbres abattus
 les_arbres_Lambert93@bbox # des arbres vivants
 
-
+# Nombre d'arbres
+les_arbres_abattus_Lambert93@coords %>% nrow()
+les_arbres_Lambert93@coords %>% nrow()
 ```
 
 # Préparation des jeux de données
@@ -185,6 +187,9 @@ les_arbres_Lambert93@data %>%
          Y=coords.x2) %>% 
   select(ID, Espece, EspeceFrancais, Genre, Circonference, Hauteur, MotifAbattage, X, Y, GenrEsp, Etat) -> 
   BDD_Vivants_POSL
+
+# Nombre d'arbres
+BDD_Vivants_POSL %>% nrow()
 ```
 
 Sélection des arbres vivants dont l'espèce et le genre sont connus:
@@ -194,6 +199,9 @@ BDD_Vivants_POSL  %>%
   filter(EspeceFrancais != "Non spécifié") %>% 
   filter(Espece != "n. sp.") ->
   BDD_Vivants_renseignes_POSL
+
+# Nombre d'arbres
+BDD_Vivants_POSL %>% nrow()
 ```
 
 
@@ -229,6 +237,9 @@ les_arbres_abattus_Lambert93@data %>%
            Y=coords.x2) %>% 
   select(ID, Espece, EspeceFrancais, Genre, Circonference, Hauteur, MotifAbattage, X, Y, GenrEsp, Etat) ->
   BDD_Abattus_POSL
+
+# Nombre d'arbres
+BDD_Abattus_POSL %>% nrow()
 ```
 
 Sélection des arbres abattus dont l'espèce et le genre sont connus:
@@ -238,6 +249,9 @@ BDD_Abattus_POSL  %>%
   filter(EspeceFrancais != "Non spécifié") %>% 
   filter(Espece != "n. sp.") ->
   BDD_Abattus_renseignes_POSL
+
+# Nombre d'arbres
+BDD_Abattus_renseignes_POSL %>% nrow()
 ```
 
 
@@ -251,6 +265,9 @@ BDD_Vivants_renseignes_POSL %>%
   rbind(BDD_Abattus_renseignes_POSL) %>% 
   print -> 
   BDD_Vivants_et_Abattus_renseignes_POSL
+
+# Nombre d'arbres
+BDD_Vivants_et_Abattus_renseignes_POSL %>% nrow()
 ```
 
 ## Récupération des circonférences
@@ -266,6 +283,9 @@ library("magrittr")
 BDD_Vivants_et_Abattus_renseignes_POSL %<>% 
   select(-Circonference) %>% 
   inner_join(Circonferences, by="ID")
+
+# Nombre d'arbres
+BDD_Vivants_et_Abattus_renseignes_POSL %>% nrow()
 ```
 
 
