@@ -347,6 +347,13 @@ les_arbres_abattus_Lambert93@bbox  #  des arbres abattus</code></pre>
 <pre><code>##                 min       max
 ## coords.x1  642113.5  661079.2
 ## coords.x2 6849293.0 6868231.5</code></pre>
+<pre class="r"><code># Nombre d&#39;arbres
+les_arbres_abattus_Lambert93@coords %&gt;%
+    nrow()</code></pre>
+<pre><code>## [1] 973</code></pre>
+<pre class="r"><code>les_arbres_Lambert93@coords %&gt;%
+    nrow()</code></pre>
+<pre><code>## [1] 204638</code></pre>
 <p></p>
 </div>
 </div>
@@ -384,7 +391,11 @@ les_arbres_Lambert93@data %&gt;%
          X=coords.x1,
          Y=coords.x2) %&gt;% 
   select(ID, Espece, EspeceFrancais, Genre, Circonference, Hauteur, MotifAbattage, X, Y, GenrEsp, Etat) -&gt; 
-  BDD_Vivants_POSL</code></pre>
+  BDD_Vivants_POSL
+
+# Nombre d&#39;arbres
+BDD_Vivants_POSL %&gt;% nrow()</code></pre>
+<pre><code>## [1] 1472</code></pre>
 <p></p>
 <p>Sélection des arbres vivants dont l’espèce et le genre sont connus:</p>
 <p></p>
@@ -392,7 +403,11 @@ les_arbres_Lambert93@data %&gt;%
     filter(!is.na(Espece), !is.na(EspeceFrancais),
         !is.na(Genre)) %&gt;%
     filter(EspeceFrancais != &quot;Non spécifié&quot;) %&gt;%
-    filter(Espece != &quot;n. sp.&quot;) -&gt; BDD_Vivants_renseignes_POSL</code></pre>
+    filter(Espece != &quot;n. sp.&quot;) -&gt; BDD_Vivants_renseignes_POSL
+# Nombre d&#39;arbres
+BDD_Vivants_POSL %&gt;%
+    nrow()</code></pre>
+<pre><code>## [1] 1472</code></pre>
 <p></p>
 </div>
 <div id="arbres-abattus" class="section level2" number="2.2">
@@ -426,7 +441,11 @@ les_arbres_Lambert93@data %&gt;%
            X=coords.x1,
            Y=coords.x2) %&gt;% 
   select(ID, Espece, EspeceFrancais, Genre, Circonference, Hauteur, MotifAbattage, X, Y, GenrEsp, Etat) -&gt;
-  BDD_Abattus_POSL</code></pre>
+  BDD_Abattus_POSL
+
+# Nombre d&#39;arbres
+BDD_Abattus_POSL %&gt;% nrow()</code></pre>
+<pre><code>## [1] 49</code></pre>
 <p></p>
 <p>Sélection des arbres abattus dont l’espèce et le genre sont connus:</p>
 <p></p>
@@ -434,7 +453,11 @@ les_arbres_Lambert93@data %&gt;%
     filter(!is.na(Espece), !is.na(EspeceFrancais),
         !is.na(Genre)) %&gt;%
     filter(EspeceFrancais != &quot;Non spécifié&quot;) %&gt;%
-    filter(Espece != &quot;n. sp.&quot;) -&gt; BDD_Abattus_renseignes_POSL</code></pre>
+    filter(Espece != &quot;n. sp.&quot;) -&gt; BDD_Abattus_renseignes_POSL
+# Nombre d&#39;arbres
+BDD_Abattus_renseignes_POSL %&gt;%
+    nrow()</code></pre>
+<pre><code>## [1] 48</code></pre>
 <p></p>
 </div>
 <div id="fusion" class="section level2" number="2.3">
@@ -465,6 +488,10 @@ anti_join(BDD_Abattus_renseignes_POSL, by = &quot;ID&quot;) %&gt;%
 ## #   Circonference &lt;int&gt;, Hauteur &lt;int&gt;,
 ## #   MotifAbattage &lt;chr&gt;, X &lt;dbl&gt;, Y &lt;dbl&gt;,
 ## #   GenrEsp &lt;fct&gt;, Etat &lt;chr&gt;</code></pre>
+<pre class="r"><code># Nombre d&#39;arbres
+BDD_Vivants_et_Abattus_renseignes_POSL %&gt;%
+    nrow()</code></pre>
+<pre><code>## [1] 1450</code></pre>
 <p></p>
 </div>
 <div id="récupération-des-circonférences" class="section level2" number="2.4">
@@ -477,7 +504,11 @@ anti_join(BDD_Abattus_renseignes_POSL, by = &quot;ID&quot;) %&gt;%
 library(&quot;magrittr&quot;)
 BDD_Vivants_et_Abattus_renseignes_POSL %&lt;&gt;%
     select(-Circonference) %&gt;%
-    inner_join(Circonferences, by = &quot;ID&quot;)</code></pre>
+    inner_join(Circonferences, by = &quot;ID&quot;)
+# Nombre d&#39;arbres
+BDD_Vivants_et_Abattus_renseignes_POSL %&gt;%
+    nrow()</code></pre>
+<pre><code>## [1] 1450</code></pre>
 <p></p>
 </div>
 <div id="etiquettes-courtes-pour-les-arbres-abattus" class="section level2" number="2.5">
