@@ -126,10 +126,18 @@ Accumulation de la diversité de 0 à 500 m pour q=0, 1 et 2 (Richesse, Shannon,
 
 ```{r}
 library("SpatDiv")
+# Calcul avec H0 touts les 50 m pour ne pas avoir de NA (limite de SpatDiv à corriger)
 Accum <- DivAccum(POSL_VA_wmppp, 
-                  r.seq=c(seq(from=0, to=50, by=5), seq(from=100, to=500, by=50)), 
+#                 r.seq=c(0, seq(from=25, to=50, by=5), seq(from=100, to=500, by=50)), 
+                  r.seq=seq(from=0, to=500, by=50), 
                   q.seq = 0:2, 
-                  H0 = "None",
+                  H0 = "RandomLocation",
+                  NumberOfSimulations = 100,
+                  Individual = TRUE)
+# Calcul à 25m, sans HO
+Accum25 <- DivAccum(POSL_VA_wmppp, 
+                  r.seq=c(0, 25), 
+                  q.seq = 0:2, 
                   Individual = TRUE)
 ```
 
@@ -150,7 +158,7 @@ Carte de la richesse à 25 m:
 
 ```{r}
 par(mar=c(0,0,0,0))
-MapPlot(Accum, Order=0, NeighborHood=25)
+MapPlot(Accum25, Order=0, NeighborHood=25)
 # Arbres abattus
 BDD_Vivants_et_Abattus_renseignes_POSL %>% 
   filter(Etat == "Abattu") -> 
@@ -180,7 +188,7 @@ Carte de la diversité d'ordre 1 à 25 m:
 
 ```{r}
 par(mar=c(0,0,0,0))
-MapPlot(Accum, Order=1, NeighborHood=25)
+MapPlot(Accum25, Order=1, NeighborHood=25)
 # Arbres abattus
 BDD_Vivants_et_Abattus_renseignes_POSL %>% 
   filter(Etat == "Abattu") -> 
@@ -205,7 +213,7 @@ Carte de la diversité d'ordre 2 à 25 m:
 
 ```{r}
 par(mar=c(0,0,0,0))
-MapPlot(Accum, Order=2, NeighborHood=25)
+MapPlot(Accum25, Order=2, NeighborHood=25)
 # Arbres abattus
 BDD_Vivants_et_Abattus_renseignes_POSL %>% 
   filter(Etat == "Abattu") -> 
@@ -219,8 +227,8 @@ with(Abattus, points(x = X, y = Y, pch = 20))
 Diversité d'ordres 0, 1 et 2 à 25m autour des arbres:
 
 ```{r}
-Distance <- 6 # 25 m
-Accum$Neighborhoods[ , Distance, ] %>% 
+Distance <- 2 # 25 m
+Accum25$Neighborhoods[ , Distance, ] %>% 
    t %>% 
   as_tibble %>% 
   # Les lignes sont les arbres, les colonnes l'ordre de la diversité
