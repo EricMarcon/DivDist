@@ -116,7 +116,6 @@ BDD_Vivants_et_Abattus_renseignes_POSL %>%
   as.wmppp(unitname = c("meter", "meters")) -> 
   POSL_VA_wmppp
 autoplot(POSL_VA_wmppp)
-### Richesse : ordre 0
 ```
 
 # Diversité
