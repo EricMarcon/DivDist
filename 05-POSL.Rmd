@@ -106,14 +106,14 @@ load("data/POSL.RData")
 
 # Jeux de points
 
-## Arbres abattus
+## Arbres malades
 
 ```{r}
 library("dbmss")
 BDD_Vivants_et_Abattus_renseignes_POSL %>% 
   # Le poids est la surface terrière
   mutate(PointWeight = Circonference^2/4/pi) %>% 
-  rename(PointType = Etat) %>% 
+  mutate(PointType = ifelse(str_starts(MotifAbattage, "Foyer"), "Foyer", as.character(EspeceFrancais))) %>% 
   as.wmppp(unitname = c("meter", "meters")) -> 
   POSL_Ab_wmppp
 autoplot(POSL_Ab_wmppp)
@@ -134,23 +134,27 @@ autoplot(POSL_Esp_wmppp)
 
 # Concentration locale
 
-## Concentration des arbres abattus
+## Concentration des érables malades
 
-Carte de la concentration locale relative cumulée (M) intratype dans un voisinage de 25m autour des arbres abattus.
+Carte de la concentration locale relative cumulée (M) intertype des érables vivants dans un voisinage de 15m autour des arbres malades.
 
 ```{r}
 # Calcul de M individuel
-M_POSL <- Mhat(POSL_Ab_wmppp, ReferenceType = "Abattu", Individual = TRUE)
+M_POSL <- Mhat(POSL_Ab_wmppp, ReferenceType = "Foyer", NeighborType = "Erable", Individual = TRUE)
 # Réduction du jeu de points pour la carte (code temporaire, à automatiser)
-POSL_Ab_seuls_wmppp <- POSL_Ab_wmppp[POSL_Ab_wmppp$marks$PointType == "Abattu"]
+POSL_Ab_seuls_wmppp <- POSL_Ab_wmppp[POSL_Ab_wmppp$marks$PointType == "Foyer"]
 par(mar=c(0,0,0,0))
 library("SpatDiv")
 # Carte
-MapPlot(M_POSL, POSL_Ab_seuls_wmppp, r=25)
+MapPlot(M_POSL, POSL_Ab_seuls_wmppp, r=15)
+# Arbres abattus
+BDD_Vivants_et_Abattus_renseignes_POSL %>% 
+  filter(str_starts(MotifAbattage, "Foyer")) -> 
+  Foyer
+with(Foyer, points(x = X, y = Y, pch = 20))
 ```
 
-En violet : dispersion relative, en vert-jaune-rouge : concentration.
-Pas très intéressant.
+Les arbres malades sont entourés d'érables sains (concentration intertype). Mais il faudrait descendre à 5m : pb techniques à résoudre pour éliminer les NA.
 
 ## Concentration des érables
 
