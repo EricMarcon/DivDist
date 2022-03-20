@@ -140,7 +140,6 @@ Carte de la concentration locale relative cumulée (M) intertype des érables vi
 M_POSL <- Mhat(POSL_Ab_wmppp, ReferenceType = "Foyer", NeighborType = "Erable", Individual = TRUE)
 # Réduction du jeu de points pour la carte (code temporaire, à automatiser)
 POSL_Ab_seuls_wmppp <- POSL_Ab_wmppp[POSL_Ab_wmppp$marks$PointType == "Foyer"]
-par(mar=c(0,0,0,0))
 library("SpatDiv")
 # Carte
 MapPlot(M_POSL, POSL_Ab_seuls_wmppp, r=15)
@@ -163,7 +162,6 @@ Carte de la concentration locale relative cumulée (M) intratype dans un voisina
 M_POSL_Erables <- Mhat(POSL_Esp_wmppp, ReferenceType = "Erable", Individual = TRUE)
 # Réduction du jeu de points pour la carte (code temporaire, à automatiser)
 POSL_Erables_wmppp <- POSL_Esp_wmppp[POSL_Esp_wmppp$marks$PointType == "Erable"]
-par(mar = c(0,0,0,0))
 # Carte
 MapPlot(M_POSL_Erables, POSL_Erables_wmppp, r = 15)
 # Arbres abattus

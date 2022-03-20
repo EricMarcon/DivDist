@@ -200,7 +200,6 @@ POSL_A_wmppp %>%
 
 ```{r}
 Density_POSL <-  density(POSL_VA_wmppp, bw.diggle(POSL_VA_wmppp), dimyx=c(128, 128))
-par(mar = c(0, 0, 0, 0))
 persp.im(Density_POSL , shade = 0.5,
          scale = FALSE, axes = TRUE,
          border = NA, box = FALSE,

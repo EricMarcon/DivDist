@@ -157,7 +157,6 @@ Richness(POSL_VA_wmppp, Correction = "None")
 Carte de la richesse à 10 m:
 
 ```{r}
-par(mar=c(0,0,0,0))
 MapPlot(Accum10, Order=0, NeighborHood=10, Points = TRUE)
 # Arbres abattus
 BDD_Vivants_et_Abattus_renseignes_POSL %>%
@@ -168,7 +167,6 @@ with(Abattus, points(x = X, y = Y, pch = 20))
 Carte de la richesse à 25 m:
 
 ```{r}
-par(mar=c(0,0,0,0))
 MapPlot(Accum25, Order=0, NeighborHood=25, Points = TRUE)
 # Arbres abattus
 BDD_Vivants_et_Abattus_renseignes_POSL %>%
@@ -193,7 +191,6 @@ Diversity(POSL_VA_wmppp, q=1, Correction = "None")
 Carte de la diversité d'ordre 1 à 25 m:
 
 ```{r}
-par(mar=c(0,0,0,0))
 MapPlot(Accum25, Order=1, NeighborHood=25)
 # Arbres abattus
 BDD_Vivants_et_Abattus_renseignes_POSL %>% 
@@ -218,7 +215,6 @@ Diversity(POSL_VA_wmppp, q=2, Correction = "None")
 Carte de la diversité d'ordre 2 à 25 m:
 
 ```{r}
-par(mar=c(0,0,0,0))
 MapPlot(Accum25, Order=2, NeighborHood=25)
 # Arbres abattus
 BDD_Vivants_et_Abattus_renseignes_POSL %>% 
