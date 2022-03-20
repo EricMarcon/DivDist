@@ -8,12 +8,9 @@ abstract: >
 date: "`r format(Sys.time(), '%d %B %Y')`"
 url: https://GitHubID.github.io/Repository/
 github-repo: GitHubID/Repository
-lang: en-US
-otherlangs: [fr-FR,it]
+lang: fr-FR
 bibliography: references.bib
 biblio-style: chicago
-preamble: >
-  \hyphenation{bio-di-ver-si-ty sap-lings}
 pdftoc: false
 toc-depth: 3
 always_allow_html: yes
@@ -136,7 +133,7 @@ autoplot(POSL_Esp_wmppp)
 
 ## Concentration des érables malades
 
-Carte de la concentration locale relative cumulée (M) intertype des érables vivants dans un voisinage de 15m autour des arbres malades.
+Carte de la concentration locale relative cumulée (M) intertype des érables vivants dans un voisinage de 15 m autour des arbres malades.
 
 ```{r}
 # Calcul de M individuel
@@ -154,20 +151,21 @@ BDD_Vivants_et_Abattus_renseignes_POSL %>%
 with(Foyer, points(x = X, y = Y, pch = 20))
 ```
 
-Les arbres malades sont entourés d'érables sains (concentration intertype). Mais il faudrait descendre à 5m : pb techniques à résoudre pour éliminer les NA.
+Les arbres malades sont entourés d'érables sains (concentration intertype).
+
 
 ## Concentration des érables
 
-Carte de la concentration locale relative cumulée (M) intratype dans un voisinage de 25m autour des érables.
+Carte de la concentration locale relative cumulée (M) intratype dans un voisinage de 15 m autour des érables.
 
 ```{r}
 # Calcul de M individuel
 M_POSL_Erables <- Mhat(POSL_Esp_wmppp, ReferenceType = "Erable", Individual = TRUE)
 # Réduction du jeu de points pour la carte (code temporaire, à automatiser)
 POSL_Erables_wmppp <- POSL_Esp_wmppp[POSL_Esp_wmppp$marks$PointType == "Erable"]
-par(mar=c(0,0,0,0))
+par(mar = c(0,0,0,0))
 # Carte
-MapPlot(M_POSL_Erables, POSL_Erables_wmppp, r=25)
+MapPlot(M_POSL_Erables, POSL_Erables_wmppp, r = 15)
 # Arbres abattus
 BDD_Vivants_et_Abattus_renseignes_POSL %>% 
   filter(str_starts(MotifAbattage, "Foyer")) -> 

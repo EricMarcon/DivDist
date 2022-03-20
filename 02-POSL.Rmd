@@ -8,12 +8,9 @@ abstract: >
 date: "`r format(Sys.time(), '%d %B %Y')`"
 url: https://GitHubID.github.io/Repository/
 github-repo: GitHubID/Repository
-lang: en-US
-otherlangs: [fr-FR,it]
+lang: fr-FR
 bibliography: references.bib
 biblio-style: chicago
-preamble: >
-  \hyphenation{bio-di-ver-si-ty sap-lings}
 pdftoc: false
 toc-depth: 3
 always_allow_html: yes
